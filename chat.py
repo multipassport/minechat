@@ -1,5 +1,12 @@
+import aiofiles
 import asyncio
 import configargparse
+import logging
+
+import datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse():
@@ -15,10 +22,25 @@ async def connect_to_chat(parser_args):
         parser_args.host, parser_args.port,
     )
     while True:
-        data = await reader.read(100)
-        print(data.decode('utf-8'))
+        chat_message = await reader.readline()
+        message_time = datetime.datetime.now().strftime('%d.%m.%y %H:%M')
+        decoded_message = chat_message.decode()
+        message_with_timestamp = f'[{message_time}] {decoded_message}'
+
+        async with aiofiles.open(parser_args.history, mode='a', encoding='utf-8') as file:
+            await file.writelines(message_with_timestamp)
+
+        print(message_with_timestamp)
 
 
 if __name__ == '__main__':
     parser_args = parse().parse_args()
+    # print(datetime.datetime.now().strftime('%d.%m.%y %H:%M'))
+    # print(datetime.datetime.now().strftime())
+
+    logging.basicConfig(
+        format='%(asctime)s - %(message)s',
+        level=logging.INFO,
+        # filename=parser_args.history,
+    )
     asyncio.run(connect_to_chat(parser_args))
