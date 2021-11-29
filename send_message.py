@@ -1,9 +1,8 @@
-import aiofiles
 import asyncio
-import configargparse
+import json
 import logging
 
-import datetime
+import configargparse
 
 
 logger = logging.getLogger('__name__')
@@ -25,17 +24,16 @@ async def send_message(parser_args):
 
     account_hash = 'bc744a84-5161-11ec-8c47-0242ac110002'
     message_to_send = f'{account_hash}\n{parser_args.message}\n\n'
-    print(message_to_send)
 
     server_reply = await reader.readline()
-    print(server_reply.decode())
     logging.info(server_reply.decode())
 
     writer.write(message_to_send.encode())
 
     server_reply_json = await reader.readline()
-    print(server_reply_json.decode())
     logging.info(server_reply_json.decode())
+    if not json.loads(server_reply_json):
+        print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
 
     writer.close()
 
