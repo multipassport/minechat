@@ -26,7 +26,10 @@ async def register(parser_args):
 
     server_reply = await reader.readline()
 
-    message_to_register = f'\n{parser_args.nickname}\n'
+    escaped_nickname = fr'{parser_args.nickname}'
+    print(escaped_nickname)
+
+    message_to_register = f'\n{escaped_nickname}\n'
     writer.write(message_to_register.encode())
 
     server_reply = await reader.readline()
@@ -35,28 +38,24 @@ async def register(parser_args):
     account_hash = json.loads(server_reply)['account_hash']
     with open('sender_config.txt', 'a', encoding='utf-8') as file:
         file.write(f'\naccount_hash={account_hash}')
+    logging.debug('Registered a new user')
 
 
-async def send_message(parser_args):
+async def send_message(parser_args, account_hash):
     reader, writer = await asyncio.open_connection(
         parser_args.host, parser_args.port,
     )
+    escaped_message = fr'{parser_args.message}'
 
-    if parser_args.account_hash:
-        account_hash = parser_args.account_hash
-    else:
-        message_to_register = '\n\n\n'
-        writer.write(message_to_register.encode())
-
-    message_to_send = f'{account_hash}\n{parser_args.message}\n\n'
+    message_to_send = f'{parser_args.account_hash}\n{escaped_message}\n\n'
 
     server_reply = await reader.readline()
-    logging.info(server_reply.decode())
+    logging.debug(server_reply.decode())
 
     writer.write(message_to_send.encode())
 
     server_reply_json = await reader.readline()
-    logging.info(server_reply_json.decode())
+    logging.debug(server_reply_json.decode())
 
     if not json.loads(server_reply_json):
         print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
@@ -70,11 +69,12 @@ if __name__ == '__main__':
 
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.INFO,
+        level=logging.DEBUG,
         filename='chatlog.log',
     )
 
-    if not parser_args.account_hash:
+    # account_hash = parser_args.account_hash
+    if not (account_hash := parser_args.account_hash):
         account_hash = asyncio.run(register(parser_args))
 
-    asyncio.run(send_message(parser_args))
+    asyncio.run(send_message(parser_args, account_hash))
