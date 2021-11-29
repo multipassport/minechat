@@ -1,9 +1,18 @@
 import asyncio
+import configargparse
 
 
-async def connect_to_chat():
+def parse():
+    parser = configargparse.ArgumentParser(default_config_files=['./config.txt'])
+    parser.add('--host', help='Chat host')
+    parser.add('--port', help='Chat port')
+    parser.add('--history', help='Where to save chat history')
+    return parser
+
+
+async def connect_to_chat(parser_args):
     reader, writer = await asyncio.open_connection(
-        'minechat.dvmn.org', 5000
+        parser_args.host, parser_args.port,
     )
     while True:
         data = await reader.read(100)
@@ -11,4 +20,5 @@ async def connect_to_chat():
 
 
 if __name__ == '__main__':
-    asyncio.run(connect_to_chat())
+    parser_args = parse().parse_args()
+    asyncio.run(connect_to_chat(parser_args))
