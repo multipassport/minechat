@@ -4,7 +4,6 @@ import logging
 
 import configargparse
 
-
 logger = logging.getLogger('__name__')
 
 
@@ -19,40 +18,36 @@ def parse():
     return parser
 
 
-async def register(parser_args):
-    reader, writer = await asyncio.open_connection(
-        parser_args.host, parser_args.port,
-    )
-
+async def register(reader, writer, parser_args):
     server_reply = await reader.readline()
 
     escaped_nickname = fr'{parser_args.nickname}'
-    print(escaped_nickname)
 
     message_to_register = f'\n{escaped_nickname}\n'
     writer.write(message_to_register.encode())
 
     server_reply = await reader.readline()
     server_reply = await reader.readline()
-    print(json.loads(server_reply)['account_hash'])
+
     account_hash = json.loads(server_reply)['account_hash']
     with open('sender_config.txt', 'a', encoding='utf-8') as file:
         file.write(f'\naccount_hash={account_hash}')
     logging.debug('Registered a new user')
 
 
-async def send_message(parser_args, account_hash):
-    reader, writer = await asyncio.open_connection(
-        parser_args.host, parser_args.port,
-    )
-    escaped_message = fr'{parser_args.message}'
-
-    message_to_send = f'{parser_args.account_hash}\n{escaped_message}\n\n'
+async def authorize(reader, writer, parser_args):
+    message_to_send = f'{parser_args.account_hash}\n'
 
     server_reply = await reader.readline()
     logging.debug(server_reply.decode())
 
     writer.write(message_to_send.encode())
+
+
+async def send_message(reader, writer, parser_args, account_hash):
+    escaped_message = fr'{parser_args.message}'
+
+    message_to_send = f'{escaped_message}\n\n'
 
     server_reply_json = await reader.readline()
     logging.debug(server_reply_json.decode())
@@ -60,6 +55,23 @@ async def send_message(parser_args, account_hash):
     if not json.loads(server_reply_json):
         print('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
         logging.error('Incorrect token')
+
+    writer.write(message_to_send.encode())
+
+    server_reply = await reader.readline()
+    logging.debug(server_reply.decode())
+
+
+async def chat(parser_args):
+    reader, writer = await asyncio.open_connection(
+        parser_args.host, parser_args.port,
+    )
+
+    if not (account_hash := parser_args.account_hash):
+        account_hash = await register(reader, writer, parser_args)
+
+    await authorize(reader, writer, parser_args)
+    await send_message(reader, writer, parser_args, account_hash)
 
     writer.close()
 
@@ -73,8 +85,4 @@ if __name__ == '__main__':
         filename='chatlog.log',
     )
 
-    # account_hash = parser_args.account_hash
-    if not (account_hash := parser_args.account_hash):
-        account_hash = asyncio.run(register(parser_args))
-
-    asyncio.run(send_message(parser_args, account_hash))
+    asyncio.run(chat(parser_args))
