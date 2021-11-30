@@ -11,7 +11,6 @@ def parse():
     parser = configargparse.ArgumentParser(default_config_files=['./sender_config.txt'])
     parser.add('--host', help='Chat host')
     parser.add('--port', help='Chat port')
-    parser.add('--history', help='Where to save chat history')
     parser.add('--account_hash', help='Account hash to login')
     parser.add('message', help='Message to send')
     parser.add('--nickname', help='Preffered nickname')
