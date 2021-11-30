@@ -1,0 +1,4 @@
+host=minechat.dvmn.org
+port=5050
+history=./chat_history.txt
+nickname=choose_nickname

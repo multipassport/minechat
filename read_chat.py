@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def parse():
-    parser = configargparse.ArgumentParser(default_config_files=['./config.txt'])
+    parser = configargparse.ArgumentParser(default_config_files=['./reader_config.txt'])
     parser.add('--host', help='Chat host')
     parser.add('--port', help='Chat port')
     parser.add('--history', help='Where to save chat history')
