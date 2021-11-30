@@ -18,11 +18,11 @@ def parse():
     return parser
 
 
-async def register(reader, writer, parser_args):
+async def register(reader, writer, nickname):
     server_reply = await reader.readline()
     logging.debug(server_reply)
 
-    escaped_nickname = fr'{parser_args.nickname}'
+    escaped_nickname = fr'{nickname}'
 
     logging.debug(f'Registering {escaped_nickname}')
     message_to_register = f'\n{escaped_nickname}\n'
@@ -39,9 +39,9 @@ async def register(reader, writer, parser_args):
     logging.debug('Registered a new user')
 
 
-async def authorize(reader, writer, parser_args):
+async def authorize(reader, writer, account_hash):
     logging.debug('Authorizing')
-    message_to_send = f'{parser_args.account_hash}\n'
+    message_to_send = f'{account_hash}\n'
 
     server_reply = await reader.readline()
     logging.debug(server_reply.decode())
@@ -49,8 +49,8 @@ async def authorize(reader, writer, parser_args):
     writer.write(message_to_send.encode())
 
 
-async def send_message(reader, writer, parser_args, account_hash):
-    escaped_message = fr'{parser_args.message}'
+async def send_message(reader, writer, message, account_hash):
+    escaped_message = fr'{message}'
     logging.debug(f'Sending message: \n\t{escaped_message}')
 
     message_to_send = f'{escaped_message}\n\n'
@@ -74,10 +74,10 @@ async def chat(parser_args):
     )
 
     if not (account_hash := parser_args.account_hash):
-        account_hash = await register(reader, writer, parser_args)
+        account_hash = await register(reader, writer, parser_args.nickname)
 
-    await authorize(reader, writer, parser_args)
-    await send_message(reader, writer, parser_args, account_hash)
+    await authorize(reader, writer, parser_args.account_hash)
+    await send_message(reader, writer, parser_args.message, account_hash)
 
     writer.close()
 
