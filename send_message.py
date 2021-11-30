@@ -20,14 +20,18 @@ def parse():
 
 async def register(reader, writer, parser_args):
     server_reply = await reader.readline()
+    logging.debug(server_reply)
 
     escaped_nickname = fr'{parser_args.nickname}'
 
+    logging.debug(f'Registering {escaped_nickname}')
     message_to_register = f'\n{escaped_nickname}\n'
     writer.write(message_to_register.encode())
 
     server_reply = await reader.readline()
+    logging.debug(server_reply)
     server_reply = await reader.readline()
+    logging.debug(server_reply)
 
     account_hash = json.loads(server_reply)['account_hash']
     with open('sender_config.txt', 'a', encoding='utf-8') as file:
@@ -36,6 +40,7 @@ async def register(reader, writer, parser_args):
 
 
 async def authorize(reader, writer, parser_args):
+    logging.debug('Authorizing')
     message_to_send = f'{parser_args.account_hash}\n'
 
     server_reply = await reader.readline()
@@ -46,6 +51,7 @@ async def authorize(reader, writer, parser_args):
 
 async def send_message(reader, writer, parser_args, account_hash):
     escaped_message = fr'{parser_args.message}'
+    logging.debug(f'Sending message: \n\t{escaped_message}')
 
     message_to_send = f'{escaped_message}\n\n'
 

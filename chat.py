@@ -18,9 +18,12 @@ def parse():
 
 
 async def connect_to_chat(parser_args):
+    logging.debug('Connecting to chat')
+
     reader, writer = await asyncio.open_connection(
         parser_args.host, parser_args.port,
     )
+
     while True:
         chat_message = await reader.readline()
         message_time = datetime.datetime.now().strftime('%d.%m.%y %H:%M')
@@ -35,12 +38,10 @@ async def connect_to_chat(parser_args):
 
 if __name__ == '__main__':
     parser_args = parse().parse_args()
-    # print(datetime.datetime.now().strftime('%d.%m.%y %H:%M'))
-    # print(datetime.datetime.now().strftime())
 
     logging.basicConfig(
-        format='%(asctime)s - %(message)s',
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO,
-        # filename=parser_args.history,
+        filename='read_chat.log',
     )
     asyncio.run(connect_to_chat(parser_args))
