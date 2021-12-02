@@ -18,10 +18,8 @@ def parse_cli_args():
     return parser
 
 
-async def register(parser_args, nickname):
-    reader, writer = await asyncio.open_connection(
-        parser_args.host, parser_args.port,
-    )
+async def register(host, port, nickname):
+    reader, writer = await asyncio.open_connection(host, port)
     server_reply = await reader.readline()
     logging.debug(server_reply)
 
@@ -78,22 +76,24 @@ async def send_message(reader, writer, message, account_hash):
     logging.debug(server_reply.decode())
 
 
-async def chat(parser_args):
-    reader, writer = await asyncio.open_connection(
-        parser_args.host, parser_args.port,
-    )
+async def chat():
+    parser_args = parse_cli_args().parse_args()
+    host = parser_args.host
+    port = parser_args.port
+    nickname = parser_args.nickname
+    message = parser_args.message
 
     if not (account_hash := parser_args.account_hash):
-        account_hash = await register(parser_args, parser_args.nickname)
+        account_hash = await register(host, port, nickname)
 
+    reader, writer = await asyncio.open_connection(host, port)
     await authorize(reader, writer, account_hash)
-    await send_message(reader, writer, parser_args.message, account_hash)
+    await send_message(reader, writer, message, account_hash)
 
     writer.close()
 
 
 if __name__ == '__main__':
-    parser_args = parse_cli_args().parse_args()
 
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -101,4 +101,4 @@ if __name__ == '__main__':
         filename='send_message.log',
     )
 
-    asyncio.run(chat(parser_args))
+    asyncio.run(chat())
